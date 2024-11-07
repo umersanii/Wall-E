@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, colorchooser
-
+from tkinter import ttk, colorchooser
 
 """
 FEATURES TO ADD:
@@ -9,99 +8,110 @@ FEATURES TO ADD:
 3. Options to add multiple walls
 """
 
-
-def pick_color(entry_var):
-    # Opens the color picker dialog and updates the selected color variable
+# Function to pick a color and update the preview
+def pick_color(entry_var, color_button):
+    """
+    Opens a color chooser dialog to allow the user to select a color.
+    Updates the color entry variable with the selected color and changes
+    the background color of the button to show the chosen color visually.
+    """
     color_code = colorchooser.askcolor(title="Choose Color")[1]
     if color_code:
-        entry_var.set(color_code)
-        update_pattern()
+        entry_var.set(color_code)  # Update the selected color variable
+        color_button.config(bg=color_code)  # Update button to display color
+        update_pattern()  # Refresh pattern preview after color change
 
-def update_pattern():
-    # Update the pattern display canvas with the selected colors for each wall
-    pattern_canvas.delete("all")  # Clear the previous pattern
-    colors = [selected_colors[i].get() for i in range(4)]
-    
-    # Draw each wall color on the canvas (for demonstration)
-    for i, color in enumerate(colors):
-        pattern_canvas.create_rectangle(i * 75, 0, (i + 1) * 75, 100, fill=color, outline="")
+# Function to update the pattern preview canvas
+def update_pattern(event=None):
+    """
+    Clears and redraws the pattern preview based on the selected colors and pattern type.
+    The pattern choice is determined by the selection in the combobox.
+    This function is called whenever a color is chosen or pattern selection changes.
+    """
+    pattern_canvas.delete("all")  # Clear previous pattern
+    colors = [selected_colors[i].get() for i in range(4)]  # Fetch selected colors
 
-def submit_info():
-    # Getting the user input
-    length = entry_length.get()
-    width = entry_width.get()
-    height = entry_height.get()
-    colors = [selected_colors[i].get() for i in range(4)]
-    patterns = [pattern_vars[i].get() for i in range(4)]
-    
-    # Displaying the collected data for each wall
-    room_config = f"Wall Dimensions:\nLength: {length} m\nWidth: {width} m\nHeight: {height} m\n"
-    paint_structure = "\n\nPaint Structure:\n" + "\n".join([f"Wall {i+1} - Color: {colors[i]}, Pattern: {patterns[i]}" for i in range(4)])
-    
-    print("Room Configuration", room_config + paint_structure)
+    # Draw each wall color on the canvas based on the selected pattern
+    pattern = selector_combobox.get()
+    if pattern == "Alternate":
+        # Alternates between the first two selected colors
+        for i in range(4):
+            color = colors[i % 2]
+            pattern_canvas.create_rectangle(i * 50, 0, (i + 1) * 50, 50, fill=color, outline="")
+    elif pattern == "First and Last":
+        # Colors the first and last wall with the first selected color, others with the second
+        for i in range(4):
+            color = colors[0] if i in {0, 3} else colors[1]
+            pattern_canvas.create_rectangle(i * 50, 0, (i + 1) * 50, 50, fill=color, outline="")
 
-# Setting up the main window
+# Set up the main window
 root = tk.Tk()
-root.title("Room Configuration")
-root.geometry("500x700")  # Set window size
+root.title("Wall Painting Configuration")
+root.geometry("400x450")
 root.configure(bg="#F0F0F0")  # Light grey background for a modern look
 
-# Style for modern UI using ttk
+# Style for ttk widgets
 style = ttk.Style()
 style.configure("TLabel", font=("Arial", 10), background="#F0F0F0")
 style.configure("TButton", font=("Arial", 10), background="#FFFFFF", padding=6)
-style.configure("TEntry", padding=6)
 
-# Padding to improve layout
-PADX, PADY = 10, 8
+# Padding values
+PADX, PADY = 5, 5
 
-# Room dimensions labels and entries
-label_title = ttk.Label(root, text="Wall-E input", font=("Helvetica", 18))
-label_title.grid(row=0, column=0, columnspan=3, padx=180, pady=PADY+30, sticky=tk.W)
+# Title label
+label_title = ttk.Label(root, text="Wall-E Input", font=("Helvetica", 16))
+label_title.grid(row=0, column=0, columnspan=3, pady=PADY+10)
 
+# Room dimension inputs
+dimensions = [("Wall Length (m):", 1), ("Wall Width (m):", 2), ("Wall Height (m):", 3)]
+entries = []
+for label_text, row in dimensions:
+    label = ttk.Label(root, text=label_text)
+    label.grid(row=row, column=0, padx=PADX, pady=PADY, sticky=tk.W)
+    entry = ttk.Entry(root)
+    entry.grid(row=row, column=1, padx=PADX, pady=PADY)
+    entries.append(entry)
 
-label_length = ttk.Label(root, text="Wall Length (in meters):")
-label_length.grid(row=1, column=0, padx=PADX, pady=PADY, sticky=tk.W)
-entry_length = ttk.Entry(root)
-entry_length.grid(row=1, column=1, padx=PADX, pady=PADY)
+# Wall color selection
+selected_colors = [tk.StringVar(value="#ffffff") for _ in range(4)]
+color_buttons = []
 
-label_width = ttk.Label(root, text="Wall Width (in meters):")
-label_width.grid(row=2, column=0, padx=PADX, pady=PADY, sticky=tk.W)
-entry_width = ttk.Entry(root)
-entry_width.grid(row=2, column=1, padx=PADX, pady=PADY)
+for i in range(2):
+    # Helper function to ensure each color button has a unique reference
+    def create_color_button(i):
+        color_button = tk.Button(root, width=6, height=1, relief="solid", bg=selected_colors[i].get())
+        # Configure button to open color picker and update its own color on click
+        color_button.config(command=lambda var=selected_colors[i], btn=color_button: pick_color(var, btn))
+        color_button.grid(row=4+i, column=1, padx=PADX, pady=PADY)
+        color_buttons.append(color_button)
+        return color_button
 
-label_height = ttk.Label(root, text="Wall Height (in meters):")
-label_height.grid(row=3, column=0, padx=PADX, pady=PADY, sticky=tk.W)
-entry_height = ttk.Entry(root)
-entry_height.grid(row=3, column=1, padx=PADX, pady=PADY)
+    # Initialize each color button
+    color_button = create_color_button(i)
 
-# Wall configurations
-selected_colors = []
-pattern_vars = []
-for i in range(4):
-    selected_colors.append(tk.StringVar())
-    pattern_vars.append(tk.StringVar(value="Pattern 1"))
-
-    # Wall color selection
+    # Label for each wall color
     label_color = ttk.Label(root, text=f"Wall {i+1} Color:")
-    label_color.grid(row=4+i*2, column=0, padx=PADX, pady=PADY, sticky=tk.W)
+    label_color.grid(row=4+i, column=0, padx=PADX, pady=PADY, sticky=tk.W)
 
-    entry_color = ttk.Entry(root, textvariable=selected_colors[i], state='readonly')
-    entry_color.grid(row=4+i*2, column=1, padx=PADX, pady=PADY)
+# Pattern selection combobox and label
+label_preview = ttk.Label(root, text="Select Pattern:")
+label_preview.grid(row=9, column=0, padx=PADX, pady=PADY, sticky=tk.W)
 
-    color_button = ttk.Button(root, text=f"Pick Color for Wall {i+1}", command=lambda var=selected_colors[i]: pick_color(var))
-    color_button.grid(row=4+i*2, column=2, padx=PADX, pady=PADY)
+# Combobox for selecting pattern; triggers update_pattern() on selection
+selector_combobox = ttk.Combobox(root, values=["Alternate", "First and Last", "First and Second"], state="readonly")
+selector_combobox.grid(row=9, column=1, padx=PADX, pady=PADY)
+selector_combobox.bind("<<ComboboxSelected>>", update_pattern)
 
-# Display for visual pattern preview using Canvas
-label_preview = ttk.Label(root, text="Pattern Preview:")
-label_preview.grid(row=12, column=0, padx=PADX, pady=PADY, sticky=tk.W)
-
-pattern_canvas = tk.Canvas(root, width=300, height=100, bg="#FFFFFF", relief="solid")
-pattern_canvas.grid(row=13, column=0, columnspan=3, padx=PADX, pady=PADY)
+# Canvas for displaying a preview of the selected pattern and colors
+pattern_canvas = tk.Canvas(root, width=200, height=50, bg="#FFFFFF", relief="solid")
+pattern_canvas.grid(row=10, column=0, columnspan=3, padx=PADX, pady=PADY)
 
 # Submit button
-submit_button = ttk.Button(root, text="Submit", command=submit_info)
-submit_button.grid(row=14, column=0, columnspan=3, pady=20)
+submit_button = ttk.Button(root, text="Submit", command=lambda: print("Form Submitted"))
+submit_button.grid(row=11, column=0, columnspan=3, pady=20)
 
-# Start the GUI event loop
+# Initialize pattern preview with default selection
+update_pattern()
+
+# Run the GUI event loop
 root.mainloop()
