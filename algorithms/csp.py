@@ -1,7 +1,7 @@
 from itertools import permutations
 
 class WallPaintingCSP:
-    def __init__(self, walls, colors, constraints):
+    def __init__(self, colors):
         """
         Initialize the WallPaintingCSP instance.
 
@@ -10,6 +10,15 @@ class WallPaintingCSP:
             colors (list): List of available colors (e.g., ["#FF0000", "#00FF00", "#0000FF"]).
             constraints (list of tuples): List of adjacency constraints (e.g., [("Wall 1", "Wall 2"), ...]).
         """
+
+        WALL_1 = "Wall 1"
+        WALL_2 = "Wall 2"
+        WALL_3 = "Wall 3"
+        WALL_4 = "Wall 4"
+
+        # Define the walls, available colors, and adjacency constraints
+        walls = [WALL_1, WALL_2, WALL_3, WALL_4]
+        constraints = [(WALL_1, WALL_2), (WALL_2, WALL_3), (WALL_3, WALL_4), (WALL_4, WALL_1)]
         self.walls = walls
         self.colors = colors
         self.constraints = constraints
@@ -86,27 +95,27 @@ class WallPaintingCSP:
         """
         return self.backtrack()
 
-"""
-Might need to be changed after adding more walls
-"""
-# Define constants for walls
-WALL_1 = "Wall 1"
-WALL_2 = "Wall 2"
-WALL_3 = "Wall 3"
-WALL_4 = "Wall 4"
+# """
+# Might need to be changed after adding more walls
+# """
+# # Define constants for walls
+# WALL_1 = "Wall 1"
+# WALL_2 = "Wall 2"
+# WALL_3 = "Wall 3"
+# WALL_4 = "Wall 4"
 
-# Define the walls, available colors, and adjacency constraints
-walls = [WALL_1, WALL_2, WALL_3, WALL_4]
-colors = ["#FF0000", "#00FF00", "#0000FF"]  # Add more colors as needed
-constraints = [(WALL_1, WALL_2), (WALL_2, WALL_3), (WALL_3, WALL_4), (WALL_4, WALL_1)]
+# # Define the walls, available colors, and adjacency constraints
+# walls = [WALL_1, WALL_2, WALL_3, WALL_4]
+# colors = ["#FF0000", "#00FF00"]  # Add more colors as needed
+# constraints = [(WALL_1, WALL_2), (WALL_2, WALL_3), (WALL_3, WALL_4), (WALL_4, WALL_1)]
 
-# Initialize and solve the CSP
-wall_painting_csp = WallPaintingCSP(walls, colors, constraints)
-solution = wall_painting_csp.solve()
+# # Initialize and solve the CSP
+# wall_painting_csp = WallPaintingCSP(walls, colors, constraints)
+# solution = wall_painting_csp.solve()
 
-if solution:
-    print("A valid color assignment for walls is:")
-    for wall, color in solution.items():
-        print(f"{wall}: {color}")
-else:
-    print("No valid assignment found.")
+# if solution:
+#     print("A valid color assignment for walls is:")
+#     for wall, color in solution.items():
+#         print(f"{wall}: {color}")
+# else:
+#     print("No valid assignment found.")

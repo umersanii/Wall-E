@@ -1,35 +1,33 @@
-# main.py
-from wall_config.wall_ui import WallUI
-from floor_navigation.floor_ui import FloorUI
-from floor_navigation.navigation_ui import NavigationUI
-from algorithms.a_star import AStar
-from algorithms.csp import CSP
+from ui import UI
+# from floor_navigation.floor_ui import FloorUI
+# from floor_navigation.navigation_ui import NavigationUI
+# from algorithms.a_star import AStar
+# from algorithms.csp import CSP
+# import wall_processing
+# import floor_processing
 
 def main():
-    # Initialize UI components
-    wall_ui = WallUI()
-    floor_ui = FloorUI()
-    nav_ui = NavigationUI()
+    # Initialize the UnifiedUI component (which includes WallUI, FloorUI, etc.)
+    unified_ui = UI()
 
-    # Show and manage the application interface
-    wall_ui.show()
-    floor_ui.show()
-    nav_ui.show()
+    # Show the unified UI interface
+    unified_ui.show()
 
-    # Example of how to use processing functions or algorithms
-    # after gathering all required inputs
-    wall_config = wall_ui.get_wall_config()
-    floor_config = floor_ui.get_floor_config()
-    nav_config = nav_ui.get_navigation_config()
+    # At this point, the UI is running and handling its own event loop.
+    # When the user interacts with the UI, the processing will be triggered.
 
-    # Process wall and floor data
-    wall_processed = wall_processing.process_wall_data(wall_config)
-    floor_processed = floor_processing.process_floor_data(floor_config)
+    # You may want to use methods from unified_ui to access configurations
+    # when the UI triggers data processing (this happens in the background).
 
-    # Run A* algorithm if necessary
-    path = AStar().find_path(nav_config, floor_processed)
+    # Example: Get Wall configuration after UI interaction
+    # wall_config = unified_ui.wall_ui.get_wall_config()  # Example of retrieving wall config
 
-    # Display results, handle further processing
+    # Processing is done within the UI's event loop asynchronously, as needed.
+    # Example of processing after gathering wall configuration:
+    # wall_processed = wall_processing.process_wall_data(wall_config)
+    # print("Processed Wall Data:", wall_processed)
+
+    # Similarly, Floor or Navigation configurations can be processed if needed.
 
 if __name__ == "__main__":
     main()
