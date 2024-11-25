@@ -1,7 +1,7 @@
 from ui import UI
 # from floor_navigation.floor_ui import FloorUI
 # from floor_navigation.navigation_ui import NavigationUI
-# from algorithms.a_star import AStar
+ from algorithms.a_star import a_star
 # from algorithms.csp import CSP
 # import wall_processing
 # import floor_processing
