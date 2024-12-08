@@ -1,5 +1,5 @@
 # Wall-E
-##Wall-E## is a Python-based tool that solves a **constraint satisfaction problem (CSP)** for optimizing the painting of walls in a 3D environment. It assigns colors to walls based on user-defined constraints like paint availability, adjacency rules, and time limits, while visualizing the walls and robot traversal in 3D.
+`Wall-E` is a Python-based tool that solves a **constraint satisfaction problem (CSP)** for optimizing the painting of walls in a 3D environment. It assigns colors to walls based on user-defined constraints like paint availability, adjacency rules, and time limits, while visualizing the walls and robot traversal in 3D.
 
 ---
 

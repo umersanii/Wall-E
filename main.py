@@ -1,215 +1,252 @@
-import tkinter as tk
-from tkinter import ttk, colorchooser, messagebox
+import json
+import heapq
 from itertools import product
-import random
-import matplotlib.pyplot as plt
 import numpy as np
+import random
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.pyplot as plt
+
+class WallPaintingSolver3D:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.surfaces = self.parse_surfaces(input_data["surfaces"])
+        self.colors = input_data["colors"]
+        self.time_per_meter = input_data["time_per_meter"]
+        self.max_time = input_data["max_time"]
+        self.paint_availability = input_data.get("paint_availability", {})
+        self.adjacency_constraint = input_data.get("adjacency_constraint", True)
+        self.min_colors = input_data.get("min_colors", 3)
+        self.start_position = tuple(input_data["start_position"])
+
+    @staticmethod
+    def parse_surfaces(surfaces):
+        """Parses surface data and calculates area."""
+        parsed_surfaces = []
+        for surface in surfaces:
+            height = surface["height"]
+            width = surface["width"]
+            position = tuple(surface["position"])
+            orientation = surface.get("orientation", "vertical")
+            parsed_surfaces.append({
+                "id": surface["id"],
+                "height": height,
+                "width": width,
+                "area": height * width,
+                "position": position,
+                "orientation": orientation
+            })
+        return parsed_surfaces
+
+    def a_star_pathfinding(self, start, goals):
+        """Finds the shortest path to cover all goals using A* in 3D."""
+        def heuristic(a, b):
+            return np.linalg.norm(np.array(a) - np.array(b))  # Euclidean distance
+
+        path = [start]
+        remaining_goals = goals[:]
+        while remaining_goals:
+            current = path[-1]
+            distances = [(heuristic(current, goal), goal) for goal in remaining_goals]
+            distances.sort()
+            _, next_goal = distances[0]
+            path.append(next_goal)
+            remaining_goals.remove(next_goal)
+        return path
+
+    def visualize_3d_environment(self, surfaces, path, original_path, colors):
+        """Visualizes the 3D environment using matplotlib."""
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot each wall
+        for surface, color in zip(surfaces, colors):
+
+            x, y, z = surface["position"]
+
+            if surface["orientation"] == "vertical":
+                # Vertical walls: Span z-axis (height) and x-axis (width), fixed y
+                x_corners = [x, x + surface["width"], x + surface["width"], x]
+                y_corners = [y, y, y, y]  # Fixed y-coordinate for vertical walls
+                z_corners = [z, z, z + surface["height"], z + surface["height"]]
+                
+            elif surface["orientation"] == "vertical-x":
+                # Vertical walls: Span z-axis (height) and x-axis (width), fixed y
+                x_corners = [x, x + surface["width"], x + surface["width"], x]
+                y_corners = [y, y, y, y]
+                z_corners = [z, z, z + surface["height"], z + surface["height"]]
+            elif surface["orientation"] == "vertical-y":
+                # Vertical walls: Span z-axis (height) and y-axis (width), fixed x
+                x_corners = [x, x, x, x]
+                y_corners = [y, y + surface["width"], y + surface["width"], y]
+                z_corners = [z, z, z + surface["height"], z + surface["height"]]
+            vertices = [list(zip(x_corners, y_corners, z_corners))]
+            ax.add_collection3d(Poly3DCollection(vertices, alpha=0.5, edgecolor=color, facecolors=color))
+
+        # Plot the robot's traversal path
+        if path:
+            path_x, path_y, path_z = zip(*path)
+            ax.plot(path_x, path_y, path_z, color='red', marker='o', label='Traversal Path')
+
+            
+            print(original_path)
+            print(colors)
+            # if path_x == original_path[0] and path_y == original_path[1] and path_z == original_path[2]:
+            #     ax.plot(path_x, path_y, path_z, color=colors[], marker='o', label='Original Path')
+
+        # Set labels and limits
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_xlim([0, max(surface["position"][0] + surface["width"] for surface in surfaces) + 1])
+        ax.set_ylim([0, max(surface["position"][1] + surface["height"] for surface in surfaces) + 1])
+        ax.set_zlim([0, max(surface["position"][2] + surface["height"] for surface in surfaces) + 1])
+
+        plt.title("3D Wall Painting Environment")
+        plt.legend()
+        plt.show()
 
 
-class WallPaintingApp:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Wall Painting Solver")
-        self.root.geometry("800x700")
-        self.root.configure(bg="#F0F0F0")
-
-        # Variables for wall and roof input
-        self.surface_entries = []  # To store entries for dimensions (walls and roof)
-        self.color_vars = []  # To store selected colors
-        self.time_per_meter = tk.DoubleVar(value=2.0)  # Default time per square meter
-        self.max_time = tk.DoubleVar(value=100.0)  # Max allowed painting time
-        self.test_mode = tk.BooleanVar(value=False)  # Test mode toggle
-
-        self.colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FFFFFF"]  # Predefined colors
-        self.valid_solutions = []  # Store valid solutions
-
-        # Tab setup
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill="both", expand=True)
-
-        # Tabs
-        self.setup_input_tab()
-        self.setup_visualization_tab()
-        self.setup_metrics_tab()
-
-    def setup_input_tab(self):
-        """Sets up the input tab for surface dimensions and constraints."""
-        self.input_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.input_tab, text="Input")
-
-        ttk.Label(self.input_tab, text="Wall and Roof Painting Solver", font=("Arial", 18)).grid(
-            row=0, column=0, columnspan=3, pady=10
-        )
-
-        # Surface dimensions input (walls and roof)
-        ttk.Label(self.input_tab, text="Enter Dimensions (Height × Width):").grid(
-            row=1, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5
-        )
-
-        for i in range(5):  # Assume 4 walls and 1 roof for simplicity
-            frame = ttk.Frame(self.input_tab)
-            frame.grid(row=2 + i, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
-            ttk.Label(frame, text=f"Surface {i+1}:").grid(row=0, column=0, padx=5)
-            entry_height = ttk.Entry(frame, width=10)
-            entry_height.grid(row=0, column=1, padx=5)
-            ttk.Label(frame, text="×").grid(row=0, column=2)
-            entry_width = ttk.Entry(frame, width=10)
-            entry_width.grid(row=0, column=3, padx=5)
-            self.surface_entries.append((entry_height, entry_width))
-
-        # Time per square meter input
-        ttk.Label(self.input_tab, text="Time Per Square Meter (minutes):").grid(
-            row=7, column=0, sticky=tk.W, padx=10, pady=5
-        )
-        ttk.Entry(self.input_tab, textvariable=self.time_per_meter, width=10).grid(row=7, column=1, padx=10)
-
-        # Max time input
-        ttk.Label(self.input_tab, text="Max Allowed Time (minutes):").grid(
-            row=8, column=0, sticky=tk.W, padx=10, pady=5
-        )
-        ttk.Entry(self.input_tab, textvariable=self.max_time, width=10).grid(row=8, column=1, padx=10)
-
-        # Test mode toggle
-        ttk.Checkbutton(self.input_tab, text="Enable Test Mode", variable=self.test_mode, command=self.fill_test_data).grid(
-            row=9, column=0, sticky=tk.W, padx=10, pady=10
-        )
-
-        # Solve button
-        solve_button = ttk.Button(self.input_tab, text="Solve", command=self.solve_csp)
-        solve_button.grid(row=10, column=0, columnspan=3, pady=20)
-
-    def setup_visualization_tab(self):
-        """Sets up the visualization tab."""
-        self.visualization_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.visualization_tab, text="Visualization")
-
-        self.canvas = tk.Canvas(self.visualization_tab, bg="#FFFFFF", width=600, height=400)
-        self.canvas.pack(pady=20)
-
-    def setup_metrics_tab(self):
-        """Sets up the metrics tab."""
-        self.metrics_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.metrics_tab, text="Metrics Report")
-
-        ttk.Label(self.metrics_tab, text="Metrics Report", font=("Arial", 18)).pack(pady=10)
-
-        self.metrics_tree = ttk.Treeview(self.metrics_tab, columns=("Colors", "Time"), show="headings")
-        self.metrics_tree.heading("Colors", text="Colors")
-        self.metrics_tree.heading("Time", text="Time (minutes)")
-        self.metrics_tree.pack(fill="both", expand=True, padx=10, pady=10)
-
-    def fill_test_data(self):
-        """Fills in test data if test mode is enabled."""
-        if self.test_mode.get():
-            # Predefined test data
-            test_dimensions = [(2.5, 3.0), (2.0, 2.5), (3.0, 2.0), (2.5, 2.5), (2.0, 3.0)]  # (Height, Width)
-            for i, (entry_height, entry_width) in enumerate(self.surface_entries):
-                entry_height.delete(0, tk.END)
-                entry_height.insert(0, test_dimensions[i][0])
-                entry_width.delete(0, tk.END)
-                entry_width.insert(0, test_dimensions[i][1])
-        else:
-            # Clear test data when disabled
-            for entry_height, entry_width in self.surface_entries:
-                entry_height.delete(0, tk.END)
-                entry_width.delete(0, tk.END)
 
     def solve_csp(self):
-        """Solves the CSP and calculates all valid solutions."""
-        surfaces = []
-        for i, (entry_height, entry_width) in enumerate(self.surface_entries):
-            try:
-                height = float(entry_height.get())
-                width = float(entry_width.get())
-                area = height * width
-                # Store the dimensions and area in a dictionary for each surface
-                surfaces.append({"area": area, "height": height, "width": width})
-            except ValueError:
-                messagebox.showerror("Invalid Input", f"Please enter valid dimensions for Surface {i+1}.")
-                return
+        """Greedy approach to solve CSP with constraints."""
+        surface_positions = [surface["position"] for surface in self.surfaces]
+        optimal_path = self.a_star_pathfinding(self.start_position, surface_positions)
 
-        time_per_meter = self.time_per_meter.get()
-        max_allowed_time = self.max_time.get()
+        total_time = 0
+        paint_usage = {color: 0 for color in self.colors}
+        color_assignment = []
+        path_index = 0
 
-        # Generate all possible color combinations (This will generate multiple possible combinations)
-        color_combinations = list(product(self.colors, repeat=len(surfaces)))
+        for surface in self.surfaces:
+            assigned_color = None
+            for color in self.colors:
+                # Check paint availability
+                if paint_usage[color] + surface["area"] > self.paint_availability.get(color, float('inf')):
+                    continue
 
-        # Filter combinations that satisfy constraints
-        self.valid_solutions = []
-        for combination in color_combinations:
-            total_time = 0
-            for i, (surface, color) in enumerate(zip(surfaces, combination)):
-                total_time += surface["area"] * time_per_meter
-                # Agent behavior: if adjacent surfaces have the same color, it's quicker
-                if i > 0 and combination[i] == combination[i - 1]:
-                    total_time -= 1  # Reduce time if adjacent surfaces have the same color
+                # Check adjacency constraints
+                if self.adjacency_constraint and path_index > 0:
+                    if color == color_assignment[-1]:  # Adjacent walls cannot have the same color
+                        continue
 
-            # Check total time constraint
-            if total_time > max_allowed_time:
-                continue
+                # Assign the color if all constraints are met
+                assigned_color = color
+                paint_usage[color] += surface["area"]
+                color_assignment.append(color)
+                break
 
-            # New constraint: Wall size constraints (e.g., surface area should be within a specific range)
-            if any(surface["area"] < 5 or surface["area"] > 30 for surface, color in zip(surfaces, combination)):
-                continue
+            # If no color could be assigned, terminate (invalid solution)
+            if not assigned_color:
+                print(f"Failed to assign color for wall {surface['id']}.")
+                return []
 
-            # New constraint: Color Availability (ensure that a certain number of colors are used)
-            if len(set(combination)) < 3:  # Require at least 3 distinct colors
-                continue
+            # Calculate painting time
+            painting_time = surface["area"] * self.time_per_meter
+            total_time += painting_time
 
-            # New constraint: Surface Proportions (height to width ratio should be between 0.5 and 2.0)
-            if any(0.5 > surface["height"] / surface["width"] or surface["height"] / surface["width"] > 2.0 for surface in surfaces):
-                continue
-
-            self.valid_solutions.append({
-                "colors": combination, 
-                "time": total_time,
-                "surfaces": surfaces  # Include surfaces data
-            })
-
-        # Sort solutions by time and select the top 10 solutions
-        self.valid_solutions.sort(key=lambda x: x["time"])
-        self.valid_solutions = self.valid_solutions[:10]
-
-        # Show results
-        if self.valid_solutions:
-            self.visualize_solutions(self.valid_solutions)  # Visualize the top 10 solutions
-            self.populate_metrics()  # Populate metrics report
-            messagebox.showinfo("Solutions", f"Found {len(self.valid_solutions)} valid solutions.")
-        else:
-            messagebox.showinfo("No Solutions", "No valid solutions found within the constraints.")
-
-    
-    def visualize_solutions(self, solutions):
-        """Visualizes the top solutions with bar plots for each solution."""
-        self.canvas.delete("all")  # Clear canvas
-
-        x_offset = 50  # Set an initial offset for the x-axis
-        for solution_index, solution in enumerate(solutions):
-            y_offset = solution_index * 50 + 10  # Vertical offset for each solution
-            for j, (color, surface) in enumerate(zip(solution["colors"], solution["surfaces"])):
-
-                # Get the width and height of the surface
-                width = surface["width"]
-                height = surface["height"]
-
-                self.canvas.create_rectangle(
-                    x_offset + j * 100, y_offset, x_offset + j * 100 + 50, y_offset + 30,
-                    fill=color
+            # Calculate travel time
+            if path_index > 0:
+                travel_distance = np.linalg.norm(
+                    np.array(optimal_path[path_index]) - np.array(optimal_path[path_index - 1])
                 )
-                self.canvas.create_text(
-                    x_offset + j * 100 + 25, y_offset + 15, text=f"{solution['time']:.2f}", fill="black"
-                )
+                travel_time = travel_distance / 2.0
+                total_time += travel_time
+
+            path_index += 1
+
+        # Validate the solution
+        if total_time > self.max_time:
+            print("Total time exceeds the maximum allowed time.")
+            return []
+
+        return [{
+            "colors": color_assignment,
+            "total_time": total_time,
+            "path": optimal_path,
+            "paint_usage": paint_usage
+        }]
+
+    def display_solutions(self, solutions):
+        """Displays solutions and visualizes the 3D environment."""
+        if not solutions:
+            print("No valid solutions found.")
+            return
+
+        print("=== Valid Solutions ===\n")
+        for idx, solution in enumerate(solutions, start=1):
+            print(f"Solution {idx}:")
+            print(f"  - Total Time: {solution['total_time']:.2f} minutes")
+            print(f"  - Colors Used: {', '.join(solution['colors'])}")
+            print(f"  - Paint Usage: {solution['paint_usage']}")
+            print(f"  - Optimal Path: {solution['path']}")
+            print("-" * 40)
+
+        # Visualize the 3D environment for the best solution
+        self.visualize_3d_environment(self.surfaces, solutions[0]["path"], solutions[0]["path"], solutions[0]["colors"])
 
 
-    def populate_metrics(self):
-        """Populates the metrics tab with the valid solutions."""
-        for row in self.metrics_tree.get_children():
-            self.metrics_tree.delete(row)
-
-        for solution in self.valid_solutions:
-            self.metrics_tree.insert("", "end", values=(",".join(solution["colors"]), f"{solution['time']:.2f}"))
-
-
+# Main execution
 if __name__ == "__main__":
-    app = WallPaintingApp()
-    app.root.mainloop()
+    complex_input_data = {
+   "surfaces": [
+        # Room 1 Walls (forming a closed room)
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-x"},  
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "vertical-y"},  
+        {"id": 3, "height": 3.0, "width": 4.0, "position": [0, 4, 0], "orientation": "vertical-x"}, 
+        {"id": 4, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-y"}, 
+
+        # Room 2 Walls
+        {"id": 5, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "vertical-x"},  
+        {"id": 6, "height": 3.0, "width": 4.0, "position": [12, 0, 0], "orientation": "vertical-y"}, 
+        {"id": 7, "height": 3.0, "width": 4.0, "position": [8, 4, 0], "orientation": "vertical-x"}, 
+        {"id": 8, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "vertical-y"},
+
+        # Room 1 to Room 2 Door
+        {"id": 9, "height": 2.0, "width": 1.0, "position": [4, 2, 0], "orientation": "vertical"},  
+
+        # Room 3 Walls
+        {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "vertical-x"}, 
+        {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 8, 0], "orientation": "vertical-y"}, 
+        {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 12, 0], "orientation": "vertical-x"}, 
+        {"id": 13, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "vertical-y"},  
+
+        # Room 2 to Room 3 Door
+        {"id": 14, "height": 2.0, "width": 1.0, "position": [8, 4, 0], "orientation": "horizontal"}  
+    ],
+    "colors": ["White", "Yellow", "Blue"],
+    "time_per_meter": 2.0,
+    "max_time": 30000.0,
+    "paint_availability": {
+        "White": 15,
+        "Yellow": 2000,
+        "Blue": 1500,
+        "Black": 1005,
+        "Red": 1000
+    },
+    "adjacency_constraint": True,
+    "min_colors": 5,
+    "start_position": [0, 0, 0] }
+    input_data = {
+   "surfaces": [
+        # Room 1 Walls (forming a closed room)
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-x"}, 
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "vertical-y"},  
+
+    ],
+    "colors": ["White", "Yellow", "Blue"],
+    "time_per_meter": 2.0,
+    "max_time": 30000.0,
+    "paint_availability": {
+        "White": 15,
+        "Yellow": 2000,
+        "Blue": 1500,
+        "Black": 1005,
+        "Red": 1000
+    },
+    "adjacency_constraint": True,
+    "min_colors": 5,
+    "start_position": [0, 0, 0] }
+ 
+    solver = WallPaintingSolver3D(complex_input_data)
+    solutions = solver.solve_csp()
+    solver.display_solutions(solutions)
