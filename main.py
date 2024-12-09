@@ -5,8 +5,10 @@ import numpy as np
 import random
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
+from algorithims.astar import AStarPathfinder
+from algorithims.csp import CSPColorAssigner
 
-class WallPaintingSolver3D:
+class WallE:
     def __init__(self, input_data):
         self.input_data = input_data
         self.surfaces = self.parse_surfaces(input_data["surfaces"])
@@ -17,6 +19,12 @@ class WallPaintingSolver3D:
         self.adjacency_constraint = input_data.get("adjacency_constraint", True)
         self.min_colors = input_data.get("min_colors", 3)
         self.start_position = tuple(input_data["start_position"])
+
+        # Instantiate sub-modules
+        self.pathfinder = AStarPathfinder()
+        self.csp_solver = CSPColorAssigner(
+            self.colors, self.paint_availability, self.adjacency_constraint, self.min_colors
+        )
 
     @staticmethod
     def parse_surfaces(surfaces):
@@ -37,66 +45,80 @@ class WallPaintingSolver3D:
             })
         return parsed_surfaces
 
-    def a_star_pathfinding(self, start, goals):
-        """Finds the shortest path to cover all goals using A* in 3D."""
-        def heuristic(a, b):
-            return np.linalg.norm(np.array(a) - np.array(b))  # Euclidean distance
+    def solve(self):
+        """Solve the wall painting problem."""
+        # Find the optimal path using A* pathfinding
+        surface_positions = [surface["position"] for surface in self.surfaces]
+        optimal_path = self.pathfinder.find_path(self.start_position, surface_positions)
 
-        path = [start]
-        remaining_goals = goals[:]
-        while remaining_goals:
-            current = path[-1]
-            distances = [(heuristic(current, goal), goal) for goal in remaining_goals]
-            distances.sort()
-            _, next_goal = distances[0]
-            path.append(next_goal)
-            remaining_goals.remove(next_goal)
-        return path
+        # Assign colors using the CSP solver
+        color_assignment, paint_usage = self.csp_solver.color_assign(self.surfaces)
+        if not color_assignment:
+            print("No valid solutions: Constraints could not be satisfied.")
+            return None
 
-    def visualize_3d_environment(self, surfaces, path, original_path, colors):
+        # Calculate total time
+        total_time = 0
+        for idx, surface in enumerate(self.surfaces):
+            painting_time = surface["area"] * self.time_per_meter
+            total_time += painting_time
+
+            if idx > 0:
+                travel_distance = np.linalg.norm(
+                    np.array(optimal_path[idx]) - np.array(optimal_path[idx - 1])
+                )
+                travel_time = travel_distance / 2.0
+                total_time += travel_time
+
+        if total_time > self.max_time:
+            print("No valid solutions: Exceeds maximum allowed time.")
+            return None
+
+        # Return the solution
+        return {
+            "colors": color_assignment,
+            "total_time": total_time,
+            "path": optimal_path,
+            "paint_usage": paint_usage
+        }
+
+    def visualize_3d_environment(self, surfaces, path, colors):
         """Visualizes the 3D environment using matplotlib."""
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
-        # Plot each wall
+        # Plot each wall with its assigned color
         for surface, color in zip(surfaces, colors):
-
             x, y, z = surface["position"]
 
-            if surface["orientation"] == "vertical":
-                # Vertical walls: Span z-axis (height) and x-axis (width), fixed y
-                x_corners = [x, x + surface["width"], x + surface["width"], x]
-                y_corners = [y, y, y, y]  # Fixed y-coordinate for vertical walls
-                z_corners = [z, z, z + surface["height"], z + surface["height"]]
-                
-            elif surface["orientation"] == "vertical-x":
-                # Vertical walls: Span z-axis (height) and x-axis (width), fixed y
+            if surface["orientation"] == "vertical-x":
+                # Vertical wall spans z (height) and x (width)
                 x_corners = [x, x + surface["width"], x + surface["width"], x]
                 y_corners = [y, y, y, y]
                 z_corners = [z, z, z + surface["height"], z + surface["height"]]
             elif surface["orientation"] == "vertical-y":
-                # Vertical walls: Span z-axis (height) and y-axis (width), fixed x
+                # Vertical wall spans z (height) and y (width)
                 x_corners = [x, x, x, x]
                 y_corners = [y, y + surface["width"], y + surface["width"], y]
                 z_corners = [z, z, z + surface["height"], z + surface["height"]]
+            elif surface["orientation"] == "horizontal":
+                # Horizontal wall spans x (width) and y (height)
+                x_corners = [x, x + surface["width"], x + surface["width"], x]
+                y_corners = [y, y, y + surface["height"], y + surface["height"]]
+                z_corners = [z, z, z, z]
+
             vertices = [list(zip(x_corners, y_corners, z_corners))]
             ax.add_collection3d(Poly3DCollection(vertices, alpha=0.5, edgecolor=color, facecolors=color))
 
-        # Plot the robot's traversal path
+        # Plot traversal path
         if path:
             path_x, path_y, path_z = zip(*path)
-            ax.plot(path_x, path_y, path_z, color='red', marker='o', label='Traversal Path')
-
-            
-            print(original_path)
-            print(colors)
-            # if path_x == original_path[0] and path_y == original_path[1] and path_z == original_path[2]:
-            #     ax.plot(path_x, path_y, path_z, color=colors[], marker='o', label='Original Path')
+            ax.plot(path_x, path_y, path_z, color="red", marker="o", label="Traversal Path")
 
         # Set labels and limits
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
         ax.set_xlim([0, max(surface["position"][0] + surface["width"] for surface in surfaces) + 1])
         ax.set_ylim([0, max(surface["position"][1] + surface["height"] for surface in surfaces) + 1])
         ax.set_zlim([0, max(surface["position"][2] + surface["height"] for surface in surfaces) + 1])
@@ -105,84 +127,20 @@ class WallPaintingSolver3D:
         plt.legend()
         plt.show()
 
-
-
-    def solve_csp(self):
-        """Greedy approach to solve CSP with constraints."""
-        surface_positions = [surface["position"] for surface in self.surfaces]
-        optimal_path = self.a_star_pathfinding(self.start_position, surface_positions)
-
-        total_time = 0
-        paint_usage = {color: 0 for color in self.colors}
-        color_assignment = []
-        path_index = 0
-
-        for surface in self.surfaces:
-            assigned_color = None
-            for color in self.colors:
-                # Check paint availability
-                if paint_usage[color] + surface["area"] > self.paint_availability.get(color, float('inf')):
-                    continue
-
-                # Check adjacency constraints
-                if self.adjacency_constraint and path_index > 0:
-                    if color == color_assignment[-1]:  # Adjacent walls cannot have the same color
-                        continue
-
-                # Assign the color if all constraints are met
-                assigned_color = color
-                paint_usage[color] += surface["area"]
-                color_assignment.append(color)
-                break
-
-            # If no color could be assigned, terminate (invalid solution)
-            if not assigned_color:
-                print(f"Failed to assign color for wall {surface['id']}.")
-                return []
-
-            # Calculate painting time
-            painting_time = surface["area"] * self.time_per_meter
-            total_time += painting_time
-
-            # Calculate travel time
-            if path_index > 0:
-                travel_distance = np.linalg.norm(
-                    np.array(optimal_path[path_index]) - np.array(optimal_path[path_index - 1])
-                )
-                travel_time = travel_distance / 2.0
-                total_time += travel_time
-
-            path_index += 1
-
-        # Validate the solution
-        if total_time > self.max_time:
-            print("Total time exceeds the maximum allowed time.")
-            return []
-
-        return [{
-            "colors": color_assignment,
-            "total_time": total_time,
-            "path": optimal_path,
-            "paint_usage": paint_usage
-        }]
-
-    def display_solutions(self, solutions):
-        """Displays solutions and visualizes the 3D environment."""
-        if not solutions:
+    def display_solutions(self, solution):
+        """Displays the solution and visualizes the 3D environment."""
+        if not solution:
             print("No valid solutions found.")
             return
 
-        print("=== Valid Solutions ===\n")
-        for idx, solution in enumerate(solutions, start=1):
-            print(f"Solution {idx}:")
-            print(f"  - Total Time: {solution['total_time']:.2f} minutes")
-            print(f"  - Colors Used: {', '.join(solution['colors'])}")
-            print(f"  - Paint Usage: {solution['paint_usage']}")
-            print(f"  - Optimal Path: {solution['path']}")
-            print("-" * 40)
+        print("=== Solution ===")
+        print(f"  - Total Time: {solution['total_time']:.2f} minutes")
+        print(f"  - Colors Used: {', '.join(solution['colors'])}")
+        print(f"  - Paint Usage: {solution['paint_usage']}")
+        print(f"  - Optimal Path: {solution['path']}")
 
-        # Visualize the 3D environment for the best solution
-        self.visualize_3d_environment(self.surfaces, solutions[0]["path"], solutions[0]["path"], solutions[0]["colors"])
+        # Visualize the solution
+        self.visualize_3d_environment(self.surfaces, solution["path"], solution["colors"])
 
 
 # Main execution
@@ -224,7 +182,7 @@ if __name__ == "__main__":
         "Red": 1000
     },
     "adjacency_constraint": True,
-    "min_colors": 5,
+    "min_colors": 3,
     "start_position": [0, 0, 0] }
     input_data = {
    "surfaces": [
@@ -247,6 +205,6 @@ if __name__ == "__main__":
     "min_colors": 5,
     "start_position": [0, 0, 0] }
  
-    solver = WallPaintingSolver3D(complex_input_data)
-    solutions = solver.solve_csp()
-    solver.display_solutions(solutions)
+    solver = WallE(complex_input_data)
+    solution = solver.solve()
+    solver.display_solutions(solution)
