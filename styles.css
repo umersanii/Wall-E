@@ -1,0 +1,114 @@
+/* Application-wide styles */
+QWidget {
+    background-color: #323643; /* Background color for the application */
+    color: #F7F7F7; /* Default font color */
+}
+
+
+#button_main_menu {
+    background-color: #606470;
+    color: #F7F7F7;
+    padding: 30px;
+    font-size: 16px;
+    border: none;
+    border-radius: 15px;
+}
+#button_main_menu:hover {
+    background-color: #F7F7F7;
+    color: #606470;
+}
+#main_label_title {
+    font-size: 60px;
+    font-weight: bold;;
+    color: rgb(2, 217, 255);
+    padding-left: 150px;
+
+}
+#main_label_title2 {
+    font-size: 40px;
+    font-weight: bold;
+    color: #5CB3FF; /* Light blue for emphasis */
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* Default styling for labels */
+#main_label, #label_default {
+    font-size: 14px;
+    color: #F7F7F7; /* White for labels */
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* Input field styling */
+QLineEdit, QSpinBox, QComboBox {
+    background-color: #f1f1f1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #37383b; /* Dark gray for input text */
+}
+
+#wall_group_box
+{
+    background-color: #323643;;
+    color: #F7F7F7;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+}
+/* Scroll area styling */
+QScrollArea {
+    background-color: #3B3F4A; /* Slightly darker gray for contrast */
+    border: none;
+    border-radius: 8px;
+    padding: 10px; /* Optional: adds some space around the content */
+    min-height: 200px; /* Increase the minimum height */
+    min-width: 500px; /* Increase the minimum width */
+}
+
+/* Buttons styling */
+QPushButton {
+    background-color: #606470;
+    color: #F7F7F7;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+}
+
+QPushButton:hover {
+    background-color: #F7F7F7;
+    color: #606470;
+}
+
+
+#submit_button {
+    background-color: #606470;
+    color: #F7F7F7;
+    padding: 30px;
+    font-size: 16px;
+    border: none;
+    border-radius: 15px;
+}
+#submit_button:hover {
+    background-color: #F7F7F7;
+    color: #606470;
+}
+
+/* Custom container for buttons layout */
+#button_layout_container {
+    display: flex;
+    justify-content: top;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Colors input field */
+#colors_input {
+    background-color: #f1f1f1;
+    padding: 5px;
+    border-radius: 4px;
+}
