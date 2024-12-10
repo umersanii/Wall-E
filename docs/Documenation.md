@@ -1,14 +1,40 @@
-## **Documentation: WALL E**
+## **Documentation: WALL-E**
 
 ### **Overview**
-The `WALL E` class solves a **constraint satisfaction problem (CSP)** for painting walls in a 3D environment. The algorithm optimizes wall painting under constraints like paint availability, adjacency rules, and time limits, while visualizing the walls and traversal paths in 3D.
+The `WALL-E` application is a wall-painting solver for a **constraint satisfaction problem (CSP)**. It optimizes wall painting in a 3D environment under constraints like paint availability, adjacency rules, and time limits. The application includes a **graphical user interface (GUI)** for interactive input and visualization of results.
 
 ---
 
 ### **Key Functionalities**
 
-#### **1. Input Structure**
-The input is a JSON object with the following fields:
+#### **1. GUI Features**
+The application includes a PyQt5-based GUI for user-friendly interaction. Key screens include:
+
+##### **Welcome Screen**
+- **Buttons**:
+  - **Manual Input**: Switches to a screen for entering inputs manually.
+  - **Load JSON File**: Allows users to load inputs from a JSON file.
+  - **Test Sample JSON**: Loads a predefined JSON sample for testing purposes.
+
+##### **Manual Input Screen**
+Allows users to specify details about walls, constraints, and other parameters interactively:
+- **Dynamic Wall Inputs**: Users can specify the number of walls and dynamically provide details for each wall (height, width, position, orientation).
+- **Additional Parameters**:
+  - Available colors (comma-separated).
+  - Time required to paint one square meter.
+  - Maximum allowed painting time.
+  - Minimum number of distinct colors.
+  - Starting position of the robot.
+- **Submit Button**: Validates inputs, constructs the JSON data, and solves the CSP.
+
+##### **Error Handling in GUI**
+- Input validation for all fields.
+- Pop-up messages for errors (e.g., missing fields, invalid formats).
+
+---
+
+#### **2. Input Structure**
+The input is either entered manually in the GUI or loaded from a JSON file. The structure includes:
 - **`surfaces`**: List of wall definitions with attributes:
   - `id`: Unique wall identifier.
   - `height`, `width`: Dimensions of the wall.
@@ -20,26 +46,28 @@ The input is a JSON object with the following fields:
 - **`colors`**: List of available colors for painting.
 - **`time_per_meter`**: Time required to paint 1 square meter.
 - **`max_time`**: Maximum allowed painting time.
-- **`paint_availability`**: Paint quantities available per color.
+- **`paint_availability`** (optional in manual input): Paint quantities per color.
 - **`adjacency_constraint`**: Boolean to enforce different colors for adjacent walls.
 - **`min_colors`**: Minimum number of distinct colors to use.
 - **`start_position`**: Starting position of the robot in 3D space.
 
 ---
 
-#### **2. Core Methods**
+#### **3. Core Methods**
 
-##### **`parse_surfaces`**
+##### **Solver Class: `WallE`**
+
+###### **`parse_surfaces`**
 Parses and processes wall data from the input:
 - Computes the area of each wall (`height * width`).
 - Prepares data for pathfinding and visualization.
 
-##### **`a_star_pathfinding`**
+###### **`a_star_pathfinding`**
 Implements the **A*** algorithm to calculate the shortest path through all walls:
 - Uses 3D Euclidean distance as the heuristic.
 - Returns the ordered list of positions for traversal.
 
-##### **`solve_csp`**
+###### **`solve_csp`**
 Solves the CSP using a **greedy algorithm**:
 - Assigns colors to walls, respecting:
   - **Paint availability**: Ensures sufficient paint for each wall.
@@ -51,13 +79,13 @@ Solves the CSP using a **greedy algorithm**:
   - Paint usage.
   - Robot's traversal path.
 
-##### **`visualize_3d_environment`**
+###### **`visualize_3d_environment`**
 Renders the walls and robot’s traversal path in a 3D environment using `matplotlib`:
 - Colors each wall according to its assigned color.
 - Plots the robot's traversal path as a red line.
 - Provides a clear view of the environment with labeled axes.
 
-##### **`display_solutions`**
+###### **`display_solutions`**
 Displays solutions in a readable format:
 - Prints the assigned colors, total time, paint usage, and path for each solution.
 - Invokes the `visualize_3d_environment` function for the best solution.
@@ -66,7 +94,18 @@ Displays solutions in a readable format:
 
 ### **How to Use**
 
-#### **1. Input Example**
+#### **1. GUI Workflow**
+1. **Launch the Application**:
+   Run the script to start the GUI.
+2. **Choose an Input Method**:
+   - **Manual Input**: Enter data interactively.
+   - **Load JSON File**: Load input from a file.
+   - **Test Sample JSON**: Use a predefined sample for testing.
+3. **Submit**:
+   - After entering the data, click **Submit**.
+   - The solution is calculated, and the result is displayed in the console and via visualization.
+
+#### **2. Input Example for JSON File**
 ```json
 {
    "surfaces": [
@@ -83,16 +122,11 @@ Displays solutions in a readable format:
 }
 ```
 
-#### **2. Instantiate and Run Solver**
-```python
-solver = WallPaintingSolver3D(input_data)
-solutions = solver.solve_csp()
-solver.display_solutions(solutions)
-```
-
 ---
 
 ### **Output**
+
+#### **Console Output**
 The solver outputs valid solutions with:
 1. **Colors Used**: Assigned colors for each wall.
 2. **Total Time**: Combined painting and travel time.
@@ -111,29 +145,22 @@ Solution 1:
 ----------------------------------------
 ```
 
----
-
-### **Error Handling**
-- **No Valid Solutions**: If constraints cannot be satisfied, prints:
-  ```plaintext
-  No valid solutions found.
-  ```
-- **Constraint Violations**: Debug messages explain violations like:
-  - Paint limits exceeded.
-  - Time exceeds `max_time`.
-
----
-
-### **Visualization**
+#### **Visualization**
 The 3D visualization shows:
 - **Walls**: Rendered in their assigned colors.
 - **Traversal Path**: A red line connecting the walls in the optimal sequence.
 
 ---
 
-### **Code Structure**
-- **Class Definition:** `WallPaintingSolver3D`.
-- **Key Functions:** `parse_surfaces`, `solve_csp`, `visualize_3d_environment`.
-- **Main Script:** Instantiates the solver, solves the problem, and displays results.
+### **Error Handling**
+- **Invalid Inputs**:
+  - The GUI validates all inputs and displays error messages for invalid entries.
+  - Examples: Non-numeric values, missing fields.
+- **No Valid Solutions**:
+  If constraints cannot be satisfied, prints:
+  ```plaintext
+  No valid solutions found.
+  ```
+
 
 *Written by ChatGPT*
