@@ -22,6 +22,7 @@
 - Required Libraries:
   - `numpy`
   - `matplotlib`
+  - `pyqt5`
 
 Install dependencies:
 ```bash
