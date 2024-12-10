@@ -5,7 +5,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     try:
-        with open("resources\styles.css", "r") as file:
+        with open("resources\\styles.css", "r") as file:
             app.setStyleSheet(file.read())
     except FileNotFoundError:
         print("Warning: styles.css not found. Using default styles.")
