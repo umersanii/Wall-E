@@ -34,7 +34,7 @@ class WallE:
             height = surface["height"]
             width = surface["width"]
             position = tuple(surface["position"])
-            orientation = surface.get("orientation", "vertical")
+            orientation = surface.get("orientation", "Vertical")
             parsed_surfaces.append({
                 "id": surface["id"],
                 "height": height,
@@ -91,12 +91,12 @@ class WallE:
         for surface, color in zip(surfaces, colors):
             x, y, z = surface["position"]
 
-            if surface["orientation"] == "vertical-x":
+            if surface["orientation"] == "Vertical-x":
                 # Vertical wall spans z (height) and x (width)
                 x_corners = [x, x + surface["width"], x + surface["width"], x]
                 y_corners = [y, y, y, y]
                 z_corners = [z, z, z + surface["height"], z + surface["height"]]
-            elif surface["orientation"] == "vertical-y":
+            elif surface["orientation"] == "Vertical-y":
                 # Vertical wall spans z (height) and y (width)
                 x_corners = [x, x, x, x]
                 y_corners = [y, y + surface["width"], y + surface["width"], y]
@@ -148,25 +148,25 @@ if __name__ == "__main__":
     complex_input_data = {
    "surfaces": [
         # Room 1 Walls (forming a closed room)
-        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-x"},  
-        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "vertical-y"},  
-        {"id": 3, "height": 3.0, "width": 4.0, "position": [0, 4, 0], "orientation": "vertical-x"}, 
-        {"id": 4, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-y"}, 
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-x"},  
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "Vertical-y"},  
+        {"id": 3, "height": 3.0, "width": 4.0, "position": [0, 4, 0], "orientation": "Vertical-x"}, 
+        {"id": 4, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-y"}, 
 
         # Room 2 Walls
-        {"id": 5, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "vertical-x"},  
-        {"id": 6, "height": 3.0, "width": 4.0, "position": [12, 0, 0], "orientation": "vertical-y"}, 
-        {"id": 7, "height": 3.0, "width": 4.0, "position": [8, 4, 0], "orientation": "vertical-x"}, 
-        {"id": 8, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "vertical-y"},
+        {"id": 5, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-x"},  
+        {"id": 6, "height": 3.0, "width": 4.0, "position": [12, 0, 0], "orientation": "Vertical-y"}, 
+        {"id": 7, "height": 3.0, "width": 4.0, "position": [8, 4, 0], "orientation": "Vertical-x"}, 
+        {"id": 8, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-y"},
 
         # Room 1 to Room 2 Door
-        {"id": 9, "height": 2.0, "width": 1.0, "position": [4, 2, 0], "orientation": "vertical"},  
+        {"id": 9, "height": 2.0, "width": 1.0, "position": [4, 2, 0], "orientation": "Vertical"},  
 
         # Room 3 Walls
-        {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "vertical-x"}, 
-        {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 8, 0], "orientation": "vertical-y"}, 
-        {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 12, 0], "orientation": "vertical-x"}, 
-        {"id": 13, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "vertical-y"},  
+        {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-x"}, 
+        {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 8, 0], "orientation": "Vertical-y"}, 
+        {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 12, 0], "orientation": "Vertical-x"}, 
+        {"id": 13, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-y"},  
 
         # Room 2 to Room 3 Door
         {"id": 14, "height": 2.0, "width": 1.0, "position": [8, 4, 0], "orientation": "horizontal"}  
@@ -187,8 +187,8 @@ if __name__ == "__main__":
     input_data = {
    "surfaces": [
         # Room 1 Walls (forming a closed room)
-        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-x"}, 
-        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "vertical-y"},  
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-x"}, 
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "Vertical-y"},  
 
     ],
     "colors": ["White", "Yellow", "Blue"],

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdi
 import sys
 from PyQt5.QtCore import Qt
 import json
+from WallE import WallE
 
 
 class StylishApp(QWidget):
@@ -58,7 +59,9 @@ class StylishApp(QWidget):
             try:
                 with open(file_name, "r") as file:
                     data = json.load(file)
-                    self.load_data_to_manual_input(data)
+                    Walle = WallE(data)
+                    Walle.display_solutions(Walle.solve())
+
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load JSON file: {e}")
 
@@ -210,8 +213,47 @@ class ManualInputScreen(QWidget):
                 "orientation": orientation_input,
             })
 
+    def get_wall_data(self):
+        wall_data = []
+        for i, wall_input in enumerate(self.wall_inputs):
+                try:
+                    height = float(wall_input["height"].text())
+                    width = float(wall_input["width"].text())
+                    position = list(map(float, wall_input["position"].text().split(",")))
+                    orientation = wall_input["orientation"].currentText()
+                    wall_data.append({
+                        "id": i + 1,  # Assign a unique id starting from 1
+                        "height": height,
+                        "width": width,
+                        "position": position,
+                        "orientation": orientation
+                    })
+                except ValueError:
+                    QMessageBox.critical(self, "Input Error", "Please ensure all wall fields are filled correctly.")
+                    return None
+        return wall_data
+
     def on_submit(self):
-        print("Submitted!")
+        surfaces = self.get_wall_data()
+        if surfaces is None:  # Validation failed
+            return
+
+        try:
+            data = {
+                "surfaces": surfaces,
+                "colors": [color.strip() for color in self.colors_input.text().split(",") if color.strip()],
+                "time_per_meter": float(self.time_input.text()),
+                "max_time": float(self.max_time_input.text()),
+                "min_colors": int(self.min_colors_input.text()),
+                "start_position": list(map(float, self.start_position_input.text().split(","))),
+            }
+            print(data)
+            WallE_obj = WallE(data)
+            WallE_obj.display_solutions(WallE_obj.solve())
+        except ValueError:
+            QMessageBox.critical(self, "Input Error", "Please ensure all inputs are correctly formatted.")
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
