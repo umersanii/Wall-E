@@ -38,6 +38,24 @@ QWidget {
     color: #F7F7F7; /* White for labels */
     margin-bottom: 5px;
     font-weight: bold;
+    background-color: transparent;
+}
+
+#label_default3 {
+    font-size: 18px;
+    color: #f8f8f8; /* White for labels */
+    margin-bottom: 5px;
+    font-weight: bold;
+    background-color: transparent;
+    
+}
+
+#label_default2 {
+    font-size: 18px;
+    color: #5CB3FF; /* White for labels */
+    margin-bottom: 5px;
+    font-weight: bold;
+    background-color: transparent;
 }
 
 /* Input field styling */
@@ -106,9 +124,18 @@ QPushButton:hover {
     margin-top: 20px;
 }
 
+#vbox_sub{
+    background-color: #494c53;
+    color: #bb1b1b;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 25px;
+}
 /* Colors input field */
 #colors_input {
     background-color: #f1f1f1;
     padding: 5px;
     border-radius: 4px;
 }
+

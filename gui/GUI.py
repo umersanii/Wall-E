@@ -4,6 +4,11 @@ from PyQt5.QtCore import Qt
 import json
 from processing.WallE import WallE
 
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.pyplot as plt
+
 
 class App(QWidget):
     def __init__(self):
@@ -52,6 +57,12 @@ class App(QWidget):
         self.manual_input_screen.show()
         self.close()
 
+    def show_output_screen(self):
+        """Switch to manual input screen."""
+        self.output_screen = OutputScreen()
+        self.output_screen.show()
+        self.close()
+
     def load_json_file(self):
         """Allow the user to load a JSON file."""
         file_name, _ = QFileDialog.getOpenFileName(self, "Open JSON File", "", "JSON Files (*.json);;All Files (*)")
@@ -69,24 +80,85 @@ class App(QWidget):
         """Load a predefined sample JSON."""
         sample_data = {
             "surfaces": [
-                {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "vertical-x"},
-                {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "vertical-y"}
+                # Room 1 - Living Room (Main Room)
+                {"id": 1, "height": 3.0, "width": 6.0, "position": [0, 0, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 2, "height": 3.0, "width": 6.0, "position": [0, 6, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 3, "height": 3.0, "width": 6.0, "position": [6, 0, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 4, "height": 3.0, "width": 6.0, "position": [0, 0, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Room 2 - Kitchen (connected to Living Room)
+                {"id": 5, "height": 3.0, "width": 5.0, "position": [6, 0, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 6, "height": 3.0, "width": 5.0, "position": [6, 5, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 7, "height": 3.0, "width": 5.0, "position": [11, 0, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 8, "height": 3.0, "width": 5.0, "position": [6, 0, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Room 3 - Bedroom (connected to Living Room and Kitchen)
+                {"id": 9, "height": 3.0, "width": 4.0, "position": [0, 6, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 10, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 6, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 6, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Room 4 - Bathroom (connected to Bedroom)
+                {"id": 13, "height": 3.0, "width": 3.0, "position": [4, 10, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 14, "height": 3.0, "width": 3.0, "position": [4, 13, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 15, "height": 3.0, "width": 3.0, "position": [7, 10, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 16, "height": 3.0, "width": 3.0, "position": [4, 10, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Room 5 - Dining Room (connected to Living Room and Kitchen)
+                {"id": 17, "height": 3.0, "width": 5.0, "position": [6, 6, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 18, "height": 3.0, "width": 5.0, "position": [6, 11, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 19, "height": 3.0, "width": 5.0, "position": [11, 6, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 20, "height": 3.0, "width": 5.0, "position": [6, 6, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Room 6 - Hallway (connecting rooms together)
+                {"id": 21, "height": 3.0, "width": 2.0, "position": [11, 0, 0], "orientation": "Vertical-x"},  # North Wall
+                {"id": 22, "height": 3.0, "width": 2.0, "position": [11, 2, 0], "orientation": "Vertical-y"},  # East Wall
+                {"id": 23, "height": 3.0, "width": 2.0, "position": [13, 0, 0], "orientation": "Vertical-x"},  # South Wall
+                {"id": 24, "height": 3.0, "width": 2.0, "position": [11, 0, 0], "orientation": "Vertical-y"},  # West Wall
+                
+                # Closing missing walls to fully enclose the rooms:
+                # 1. Connect the Hallway to Living Room
+                {"id": 25, "height": 3.0, "width": 2.0, "position": [6, 0, 0], "orientation": "Vertical-x"},  # Wall between Living Room and Hallway
+                
+                # 2. Close off the Hallway and Dining Room
+                {"id": 26, "height": 3.0, "width": 2.0, "position": [11, 5, 0], "orientation": "Vertical-y"},  # Wall between Dining Room and Hallway
+                
+                # 3. Close off the Kitchen and Hallway
+                {"id": 27, "height": 3.0, "width": 2.0, "position": [11, 5, 0], "orientation": "Vertical-x"},  # Wall between Kitchen and Hallway
+                
+                # 4. Close off the Bedroom and Kitchen
+                {"id": 28, "height": 3.0, "width": 4.0, "position": [6, 10, 0], "orientation": "Vertical-y"},  # Wall between Kitchen and Bedroom
+                
+                # 5. Close off Bathroom and Bedroom
+                {"id": 29, "height": 3.0, "width": 4.0, "position": [4, 10, 0], "orientation": "Vertical-x"},  # Wall between Bedroom and Bathroom
+                
+                # Additional closing walls for complete enclosure
+                {"id": 30, "height": 3.0, "width": 5.0, "position": [6, 11, 0], "orientation": "Vertical-x"},  # Wall between Hallway and Dining Room
+                {"id": 31, "height": 3.0, "width": 2.0, "position": [11, 10, 0], "orientation": "Vertical-y"},  # Wall between Dining Room and Hallway
+                {"id": 32, "height": 3.0, "width": 3.0, "position": [4, 6, 0], "orientation": "Vertical-y"},  # Wall between Bedroom and Living Room
+                {"id": 33, "height": 3.0, "width": 2.0, "position": [11, 8, 0], "orientation": "Vertical-x"}   # Wall closing Dining Room and Kitchen
             ],
-            "colors": ["White", "Yellow", "Blue"],
+            "colors": ["White", "Yellow", "Blue", "Red", "Black"],
             "time_per_meter": 2.0,
             "max_time": 30000.0,
             "paint_availability": {
                 "White": 15,
                 "Yellow": 2000,
-                "Blue": 1500,
+                "Blue": 150,
                 "Black": 1005,
                 "Red": 1000
             },
             "adjacency_constraint": True,
-            "min_colors": 3,
+            "min_colors": 4,
             "start_position": [0, 0, 0]
         }
-        self.load_data_to_manual_input(sample_data)
+
+        Walle = WallE(sample_data)
+        solution = Walle.solve()
+        #Walle.display_solutions()
+        self.output_screen = OutputScreen(solution, sample_data["surfaces"])
+        self.output_screen.show()
+        self.close()
 
     def load_data_to_manual_input(self, data):
         """Load the JSON data into the manual input screen."""
@@ -94,6 +166,140 @@ class App(QWidget):
         self.manual_input_screen.show()
         self.close()
 
+
+
+class OutputScreen(QWidget):
+    def __init__(self, solution, surfaces):
+        super().__init__()
+        self.setWindowTitle("Output Screen")
+        self.setGeometry(200, 200, 600, 800)
+        #self.setFixedSize(1000, 800)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # Header Label
+        Header = QLabel("Output Screen")
+        Header.setObjectName("main_label_title2")
+        Header.setAlignment(Qt.AlignCenter)  # Ensure label is centered
+        layout.addWidget(Header)
+
+        # Horizontal Box Layout for Details
+        hbox = QHBoxLayout()
+
+        # Time Section
+        vbox_time_widget = QWidget()
+        vbox_time = QVBoxLayout(vbox_time_widget)
+        vbox_time_widget.setObjectName("vbox_sub")
+
+        total_time_label = QLabel("Total Time")
+        total_time_label.setObjectName("label_default")
+        vbox_time.addWidget(total_time_label)
+
+        total_time_value = QLabel(f"{float(solution['total_time'])}")
+        total_time_value.setObjectName("label_default2")
+        vbox_time.addWidget(total_time_value)
+
+        hbox.addWidget(vbox_time_widget)
+
+        # Colors Section
+        vbox_colors_widget = QWidget()
+        vbox_colors = QVBoxLayout(vbox_colors_widget)
+        vbox_colors_widget.setObjectName("vbox_sub")
+
+        colors_used_label = QLabel("Colors Used")
+        colors_used_label.setObjectName("label_default")
+        vbox_colors.addWidget(colors_used_label)
+
+        colors_used_value = QLabel(f"{', '.join(list(set(solution['colors'])))}")
+        colors_used_value.setObjectName("label_default2")
+        vbox_colors.addWidget(colors_used_value)
+
+        hbox.addWidget(vbox_colors_widget)
+
+        # Paint Usage Section
+        vbox_paint_usage_widget = QWidget()
+        vbox_paint_usage = QVBoxLayout(vbox_paint_usage_widget)
+        vbox_paint_usage_widget.setObjectName("vbox_sub")
+
+        paint_usage_label = QLabel("Paint Usage")
+        paint_usage_label.setObjectName("label_default")
+        vbox_paint_usage.addWidget(paint_usage_label)
+
+        paint_usage_value = QLabel(f"{solution['paint_usage']}")
+        paint_usage_value.setObjectName("label_default2")
+        vbox_paint_usage.addWidget(paint_usage_value)
+
+        hbox.addWidget(vbox_paint_usage_widget)
+
+        layout.addLayout(hbox)
+
+        # Card-like Structure for 3D Plot
+        plot_card_widget = QWidget()
+        plot_card_widget.setObjectName("vbox_sub")  # Apply vbox_sub style to the container
+
+        plot_card_layout = QVBoxLayout(plot_card_widget)
+        plot_card_layout.setObjectName("vbox_sub")
+
+        # Matplotlib 3D Plot
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        plot_card_layout.addWidget(self.canvas)
+
+        layout.addWidget(plot_card_widget)
+
+        # Render the 3D plot
+        self.visualize_3d_environment(surfaces, solution["path"], solution["colors"])
+
+    def visualize_3d_environment(self, surfaces, path, colors):
+        """Visualizes the 3D environment using matplotlib."""
+        self.figure.clear()  # Clear any previous plots
+
+        # Create a 3D subplot with a transparent background
+        ax = self.figure.add_subplot(111, projection="3d", facecolor=(0, 0, 0, 0))
+
+        # Set the figure's background to transparent
+        self.figure.patch.set_alpha(0)
+
+        # Plot each wall with its assigned color
+        for surface, color in zip(surfaces, colors):
+            x, y, z = surface["position"]
+
+            if surface["orientation"] == "Vertical-x":
+                x_corners = [x, x + surface["width"], x + surface["width"], x]
+                y_corners = [y, y, y, y]
+                z_corners = [z, z, z + surface["height"], z + surface["height"]]
+            elif surface["orientation"] == "Vertical-y":
+                x_corners = [x, x, x, x]
+                y_corners = [y, y + surface["width"], y + surface["width"], y]
+                z_corners = [z, z, z + surface["height"], z + surface["height"]]
+            elif surface["orientation"] == "horizontal":
+                x_corners = [x, x + surface["width"], x + surface["width"], x]
+                y_corners = [y, y, y + surface["height"], y + surface["height"]]
+                z_corners = [z, z, z, z]
+
+            vertices = [list(zip(x_corners, y_corners, z_corners))]
+            ax.add_collection3d(Poly3DCollection(vertices, alpha=0.5, edgecolor=color, facecolors=color))
+
+        # Plot traversal path
+        if path:
+            path_x, path_y, path_z = zip(*path)
+            ax.plot(path_x, path_y, path_z, color="red", marker="o", label="Traversal Path")
+
+        # Set labels and limits
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_xlim([0, max(surface["position"][0] + surface["width"] for surface in surfaces) + 1])
+        ax.set_ylim([0, max(surface["position"][1] + surface["height"] for surface in surfaces) + 1])
+        ax.set_zlim([0, max(surface["position"][2] + surface["height"] for surface in surfaces) + 1])
+
+        ax.set_title("3D Wall Painting Environment", alpha=0.8)
+        ax.legend()
+
+        # Update the canvas and make sure background is transparent
+        self.canvas.setStyleSheet("background: transparent;")  # Ensure transparency in the canvas
+        self.canvas.draw()
 
 class ManualInputScreen(QWidget):
     def __init__(self, data=None):
