@@ -112,7 +112,7 @@ class App(QWidget):
                 "Red": 1000
             },
             "adjacency_constraint": True,
-            "min_colors": 2,
+            "min_colors": 4,
             "start_position": [0, 0, 0]
         }
 
@@ -136,7 +136,6 @@ class OutputScreen(QWidget):
         super().__init__()
         self.setWindowTitle("Output Screen")
         self.setGeometry(200, 200, 600, 800)
-        #self.setFixedSize(1000, 800)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -146,6 +145,16 @@ class OutputScreen(QWidget):
         Header.setObjectName("main_label_title2")
         Header.setAlignment(Qt.AlignCenter)  # Ensure label is centered
         layout.addWidget(Header)
+
+        # Check if solution is None
+        if solution is None:
+            # Display "Solution Not Found"
+            error_label = QLabel("Solution Not Found")
+            error_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(error_label)
+
+            # Skip further processing (no need to display time, colors, or 3D plot)
+            return
 
         # Horizontal Box Layout for Details
         hbox = QHBoxLayout()
@@ -159,15 +168,18 @@ class OutputScreen(QWidget):
         total_time_label.setObjectName("label_default")
         vbox_time.addWidget(total_time_label)
 
-        total_time_value = QLabel(f"{int(solution['total_time'])}")
-        total_time_value.setAlignment(Qt.AlignCenter)
+        if solution['total_time'] is not None:
+            total_time_value = QLabel(f"{int(solution['total_time'])}")
+        else:
+            total_time_value = QLabel("NAN")
 
+        total_time_value.setAlignment(Qt.AlignCenter)
         total_time_value.setObjectName("label_default2")
         vbox_time.addWidget(total_time_value)
 
         hbox.addWidget(vbox_time_widget)
 
-                # Colors Section
+        # Colors Section
         vbox_colors_widget = QWidget()
         vbox_colors = QVBoxLayout(vbox_colors_widget)
         vbox_colors_widget.setObjectName("vbox_sub")
@@ -176,16 +188,18 @@ class OutputScreen(QWidget):
         colors_used_label.setObjectName("label_default")
         vbox_colors.addWidget(colors_used_label)
         
-        # Extract unique colors used
-        unique_colors = set(solution['colors'].values())
-        colors_used_value = QLabel(f"{', '.join(unique_colors)}")
-        colors_used_value.setAlignment(Qt.AlignCenter)
+        if 'colors' in solution and isinstance(solution['colors'], dict):
+            unique_colors = set(solution['colors'].values())
+            colors_used_value = QLabel(f"{', '.join(unique_colors)}")
+        else:
+            colors_used_value = QLabel("NAN")
 
+        colors_used_value.setAlignment(Qt.AlignCenter)
         colors_used_value.setObjectName("label_default2")
         vbox_colors.addWidget(colors_used_value)
         
         hbox.addWidget(vbox_colors_widget)
-        
+
         # Paint Usage Section
         vbox_paint_usage_widget = QWidget()
         vbox_paint_usage = QVBoxLayout(vbox_paint_usage_widget)
@@ -195,18 +209,13 @@ class OutputScreen(QWidget):
         paint_usage_label.setObjectName("label_default")
         vbox_paint_usage.addWidget(paint_usage_label)
         
-        # Extract values from the paint_usage dictionary
-        paint_usage = solution['paint_usage']
-        paint_usage_values = [paint_usage[color] for color in unique_colors if color in paint_usage]
-        paint_usage_label.setAlignment(Qt.AlignCenter)
-
-        paint_usage_values_str = ', '.join(map(str, paint_usage_values))
-        
-        # Ensure the number of paint usage values matches the number of unique colors
-        if len(paint_usage_values) == len(unique_colors):
+        if solution and 'paint_usage' in solution and isinstance(solution['paint_usage'], dict):
+            paint_usage = solution['paint_usage']
+            paint_usage_values = [paint_usage[color] for color in unique_colors if color in paint_usage]
+            paint_usage_values_str = ', '.join(map(str, paint_usage_values))
             paint_usage_value = QLabel(f"{paint_usage_values_str}")
         else:
-            paint_usage_value = QLabel("Mismatch in colors used and paint usage values")
+            paint_usage_value = QLabel("NAN")
         
         paint_usage_value.setObjectName("label_default2")
         vbox_paint_usage.addWidget(paint_usage_value)
@@ -216,7 +225,7 @@ class OutputScreen(QWidget):
 
         # Card-like Structure for 3D Plot
         plot_card_widget = QWidget()
-        plot_card_widget.setObjectName("vbox_sub")  # Apply vbox_sub style to the container
+        plot_card_widget.setObjectName("vbox_sub")
 
         plot_card_layout = QVBoxLayout(plot_card_widget)
         plot_card_layout.setObjectName("vbox_sub")
@@ -229,9 +238,12 @@ class OutputScreen(QWidget):
         layout.addWidget(plot_card_widget)
 
         # Render the 3D plot
-        self.visualize_3d_environment(surfaces, solution["path"], solution["colors"])
-
-
+        if solution is not None:
+            self.visualize_3d_environment(surfaces, solution["path"], solution["colors"])
+        else:
+            # If no solution, do not render the 3D plot
+            print("No solution to display 3D plot.")
+    
     def visualize_3d_environment(self, surfaces, path, colors):
         """Visualizes the 3D environment using matplotlib."""
         self.figure.clear()  # Clear any previous plots
