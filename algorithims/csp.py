@@ -6,36 +6,150 @@ class CSPColorAssigner:
         self.min_colors = min_colors
 
     def color_assign(self, surfaces):
-        """Assign colors to walls while satisfying constraints."""
+        """Assign colors to walls while satisfying adjacency and minimum color constraints."""
         paint_usage = {color: 0 for color in self.colors}
-        color_assignment = []
+        color_assignment = {}
 
-        for idx, surface in enumerate(surfaces):
-            assigned_color = None
+        # Dynamically compute adjacency list
+        adjacency_list = self._calculate_adjacency_list(surfaces)
+        print("Adjacency List:", adjacency_list)  # Debugging: Verify adjacency list
+
+        def backtrack(index):
+            if index == len(surfaces):
+                # Ensure at least the required number of colors are used
+                if len(set(color_assignment.values())) < self.min_colors:
+                    return False
+                return True
+
+            surface = surfaces[index]
+            surface_id = surface["id"]
+            surface_area = surface["height"] * surface["width"]
+
             for color in self.colors:
                 # Check paint availability
-                if paint_usage[color] + surface["area"] > self.paint_availability.get(color, float('inf')):
+                if paint_usage[color] + surface_area > self.paint_availability.get(color, float('inf')):
                     continue
 
                 # Check adjacency constraints
-                if self.adjacency_constraint and idx > 0:
-                    if color == color_assignment[-1]:  # Adjacent walls cannot have the same color
-                        continue
+                if all(color_assignment.get(neighbor) != color for neighbor in adjacency_list[surface_id]):
+                    # Assign the color
+                    color_assignment[surface_id] = color
+                    paint_usage[color] += surface_area
 
-                # Assign the color if all constraints are met
-                assigned_color = color
-                paint_usage[color] += surface["area"]
-                color_assignment.append(color)
-                break
+                    if backtrack(index + 1):
+                        return True
 
-            # If no valid color was found, return failure
-            if not assigned_color:
-                print(f"Failed to assign color for wall {surface['id']}. Insufficient colors or paint.")
-                return None, None
+                    # Backtrack
+                    paint_usage[color] -= surface_area
+                    del color_assignment[surface_id]
 
-        # Ensure minimum color diversity
-        if len(set(color_assignment)) < self.min_colors:
-            print(f"Failed to satisfy minimum color diversity: {len(set(color_assignment))} < {self.min_colors}.")
+            return False
+
+        if backtrack(0):
+            return color_assignment, paint_usage
+        else:
+            print("Failed to find a valid color assignment.")
             return None, None
 
-        return color_assignment, paint_usage
+    def _calculate_adjacency_list(self, surfaces):
+        """Dynamically calculate adjacency list based on surface corners."""
+        adjacency_list = {surface["id"]: [] for surface in surfaces}
+        for i, surface1 in enumerate(surfaces):
+            for j, surface2 in enumerate(surfaces):
+                if i != j and self._are_adjacent(surface1, surface2):
+                    adjacency_list[surface1["id"]].append(surface2["id"])
+        return adjacency_list
+
+    def _are_adjacent(self, surface1, surface2):
+        """Determine if two surfaces are adjacent based on their corner coordinates."""
+        corners1 = self.compute_surface_corners(surface1)
+        corners2 = self.compute_surface_corners(surface2)
+
+        # Check if any of the corners overlap or share a boundary
+        for corner1 in corners1:
+            for corner2 in corners2:
+                if corner1 == corner2:
+                    return True  # Overlapping corner
+
+        # Check for shared edges (for surfaces that don't overlap completely)
+        # Compare x or y coordinates of the corners for shared boundaries
+        for i in range(4):
+            for j in range(4):
+                if self._is_edge_shared(corners1[i], corners1[(i+1)%4], corners2[j], corners2[(j+1)%4]):
+                    return True  # Shared edge
+        return False
+
+    def _is_edge_shared(self, corner1, corner2, corner3, corner4):
+        """Check if two edges (formed by corner pairs) share a boundary."""
+        return (
+            (corner1[0] == corner2[0] == corner3[0] == corner4[0] and  # Same x-coordinate (vertical alignment)
+             min(corner1[1], corner2[1]) <= corner3[1] <= max(corner1[1], corner2[1]) and
+             min(corner1[1], corner2[1]) <= corner4[1] <= max(corner1[1], corner2[1])) or
+            (corner1[1] == corner2[1] == corner3[1] == corner4[1] and  # Same y-coordinate (horizontal alignment)
+             min(corner1[0], corner2[0]) <= corner3[0] <= max(corner1[0], corner2[0]) and
+             min(corner1[0], corner2[0]) <= corner4[0] <= max(corner1[0], corner2[0]))
+        )
+
+    def compute_surface_corners(self, surface):
+        """Compute the four corners of a surface based on position, height, and width."""
+        x, y, z = surface["position"]
+        height = surface["height"]
+        width = surface["width"]
+        
+        if surface["orientation"] == "Vertical-x":
+            return [
+                (x, y, z),
+                (x + width, y, z),
+                (x + width, y + height, z),
+                (x, y + height, z)
+            ]
+        elif surface["orientation"] == "Vertical-y":
+            return [
+                (x, y, z),
+                (x, y + width, z),
+                (x, y + width, z + height),
+                (x, y, z + height)
+            ]
+        elif surface["orientation"] == "horizontal":
+            return [
+                (x, y, z),
+                (x + width, y, z),
+                (x + width, y + height, z),
+                (x, y + height, z)
+            ]
+        return []
+
+# Sample input
+sample_data = {
+    "surfaces": [
+        {"id": 1, "height": 3, "width": 6, "position": [0, 0, 0], "orientation": "Vertical-x"},
+        {"id": 2, "height": 3, "width": 6, "position": [0, 6, 0], "orientation": "Vertical-x"},
+        {"id": 3, "height": 3, "width": 6, "position": [6, 0, 0], "orientation": "Vertical-y"},
+        {"id": 4, "height": 3, "width": 6, "position": [0, 0, 0], "orientation": "Vertical-y"}
+    ],
+    "colors": ["Red", "Yellow", "Blue", "White", "Black"],
+    "time_per_meter": 2.0,
+    "max_time": 30000.0,
+    "paint_availability": {
+        "White": 150,
+        "Yellow": 2000,
+        "Blue": 150,
+        "Black": 1005,
+        "Red": 1000
+    },
+    "adjacency_constraint": True,
+    "min_colors": 2,
+    "start_position": [0, 0, 0]
+}
+
+# Create the CSPColorAssigner instance
+assigner = CSPColorAssigner(
+    colors=sample_data["colors"],
+    paint_availability=sample_data["paint_availability"],
+    adjacency_constraint=sample_data["adjacency_constraint"],
+    min_colors=sample_data["min_colors"]
+)
+
+# Compute adjacency list and color assignment
+adjacency_list = assigner._calculate_adjacency_list(sample_data["surfaces"])
+print("Adjacency List:", adjacency_list)

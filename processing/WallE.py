@@ -74,6 +74,11 @@ class WallE:
             print("No valid solutions: Exceeds maximum allowed time.")
             return None
 
+        print("Total time: ", total_time)
+        print("Paint usage: ", paint_usage)
+        print("Path: ", optimal_path)
+        print("Color assignment: ", color_assignment)
+
         # Return the solution
         return {
             "colors": color_assignment,
@@ -140,7 +145,7 @@ class WallE:
         print(f"  - Optimal Path: {solution['path']}")
 
         # Visualize the solution
-        self.visualize_3d_environment(self.surfaces, solution["path"], solution["colors"])
+        #self.visualize_3d_environment(self.surfaces, solution["path"], solution["colors"])
 
 
 # Main execution
