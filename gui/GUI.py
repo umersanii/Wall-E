@@ -85,21 +85,15 @@ class App(QWidget):
                 {"id": 2, "height": 3, "width": 6, "position": [0, 6, 0], "orientation": "Vertical-x"},  # Wall 2 (Room 1)
                 {"id": 3, "height": 3, "width": 6, "position": [6, 0, 0], "orientation": "Vertical-y"},  # Wall 3 (Room 1)
                 {"id": 4, "height": 3, "width": 6, "position": [0, 0, 0], "orientation": "Vertical-y"},  # Wall 4 (Room 1)
-                {"id": 15, "height": 6, "width": 6, "position": [0, 0, 3], "orientation": "horizontal"},  # Wall 4 (Room 1)
-
+                {"id": 15, "height": 6, "width": 6, "position": [0, 0, 3], "orientation": "horizontal"},  # Ceiling (Room 1)
                 
-
                 # Room 3 walls (sharing 3 walls with Room 2)
                 {"id": 9, "height": 3, "width": 8, "position": [6, 0, 0], "orientation": "Vertical-x"},  # Wall 1 (Room 3) - shared with Room 2
                 {"id": 10, "height": 3, "width": 8, "position": [6, 6, 0], "orientation": "Vertical-x"},  # Wall 2 (Room 3) - shared with Room 2
-                {"id": 11, "height": 3, "width": 6, "position": [14, 0, 0], "orientation": "Vertical-y"},   # Wall 3 (Room 3) - shared with Room 2
-
-                {"id": 12, "height": 3, "width": 8, "position": [6, 6, 0], "orientation": "Vertical-y"},  # Wall 2 (Room 3) - shared with Room 2
-                {"id": 13, "height": 3, "width": 8, "position": [0, 6, 0], "orientation": "Vertical-y"},  # Wall 2 (Room 1)
-                {"id": 14, "height": 3, "width": 6, "position": [0, 14, 0], "orientation": "Vertical-x"},  # Wall 2 (Room 1)
-
-
-
+                {"id": 11, "height": 3, "width": 6, "position": [14, 0, 0], "orientation": "Vertical-y"},  # Wall 3 (Room 3) - shared with Room 2
+                {"id": 12, "height": 3, "width": 8, "position": [6, 6, 0], "orientation": "Vertical-y"},  # Duplicate shared wall (adjust logic later if needed)
+                {"id": 13, "height": 3, "width": 8, "position": [0, 6, 0], "orientation": "Vertical-y"},  # Wall between Room 1 and Room 2
+                {"id": 14, "height": 3, "width": 6, "position": [0, 14, 0], "orientation": "Vertical-x"},  # Wall connecting Room 1 and Room 3
             ],
             "colors": ["Red", "Yellow", "Blue", "White", "Black"],
             "time_per_meter": 2.0,
@@ -113,7 +107,14 @@ class App(QWidget):
             },
             "adjacency_constraint": True,
             "min_colors": 4,
-            "start_position": [0, 0, 0]
+            "start_position": [0, 0, 0],
+            "doors": {
+                # Door specifications for shared walls
+                9: {"door_position": [6, 4, 0]},  # Door in Wall 9
+                10: {"door_position": [6, 9, 0]},  # Door in Wall 10
+                11: {"door_position": [14, 3, 0]},  # Door in Wall 11
+                13: {"door_position": [0, 9, 0]},  # Door in Wall 13
+            }
         }
 
         Walle = WallE(sample_data)
