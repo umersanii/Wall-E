@@ -9,7 +9,6 @@ class CSPColorAssigner:
         """Assign colors to walls while satisfying adjacency and minimum color constraints."""
         paint_usage = {color: 0 for color in self.colors}
         color_assignment = {}
-        used_colors = set()  # Track the set of colors used
 
         # Dynamically compute adjacency list
         adjacency_list = self._calculate_adjacency_list(surfaces)
@@ -18,7 +17,7 @@ class CSPColorAssigner:
         def backtrack(index):
             if index == len(surfaces):
                 # Ensure at least the required number of colors are used
-                if len(used_colors) < self.min_colors:
+                if len(set(color_assignment.values())) < self.min_colors:
                     return False
                 return True
 
@@ -27,10 +26,6 @@ class CSPColorAssigner:
             surface_area = surface["height"] * surface["width"]
 
             for color in self.colors:
-                # Skip the color if it exceeds the required number of colors used
-                if len(used_colors) >= self.min_colors and color not in used_colors:
-                    continue
-
                 # Check paint availability
                 if paint_usage[color] + surface_area > self.paint_availability.get(color, float('inf')):
                     continue
@@ -40,7 +35,6 @@ class CSPColorAssigner:
                     # Assign the color
                     color_assignment[surface_id] = color
                     paint_usage[color] += surface_area
-                    used_colors.add(color)  # Track that this color is being used
 
                     if backtrack(index + 1):
                         return True
@@ -48,8 +42,6 @@ class CSPColorAssigner:
                     # Backtrack
                     paint_usage[color] -= surface_area
                     del color_assignment[surface_id]
-                    if paint_usage[color] == 0:
-                        used_colors.remove(color)  # Remove color from used colors when backtracking
 
             return False
 
@@ -161,8 +153,3 @@ assigner = CSPColorAssigner(
 # Compute adjacency list and color assignment
 adjacency_list = assigner._calculate_adjacency_list(sample_data["surfaces"])
 print("Adjacency List:", adjacency_list)
-
-# Try to assign colors
-color_assignment, paint_usage = assigner.color_assign(sample_data["surfaces"])
-print("Color Assignment:", color_assignment)
-print("Paint Usage:", paint_usage)
