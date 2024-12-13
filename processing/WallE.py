@@ -19,15 +19,9 @@ class WallE:
         self.adjacency_constraint = input_data.get("adjacency_constraint", True)
         self.min_colors = input_data.get("min_colors", 3)
         self.start_position = tuple(input_data["start_position"])
-        self.doors = {surface["id"]: surface for surface in self.surfaces if "door" in surface}
 
         # Instantiate sub-modules
-        self.grid = self.create_grid(input_data["surfaces"])
-        self.pathfinder = AStarPathfinder(self.grid, self.doors)
-
-
-        # Instantiate sub-modules
-        self.pathfinder = AStarPathfinder(grid=self.grid, doors=self.doors)
+        self.pathfinder = AStarPathfinder()
         self.csp_solver = CSPColorAssigner(
             self.colors, self.paint_availability, self.adjacency_constraint, self.min_colors
         )
@@ -51,19 +45,6 @@ class WallE:
             })
         return parsed_surfaces
 
-    def create_grid(self, surfaces):
-        """Create a grid representation of the environment."""
-        max_x = max(s["position"][0] + s["width"] for s in surfaces)
-        max_y = max(s["position"][1] + s["height"] for s in surfaces)
-        max_z = max(s["position"][2] + s["height"] for s in surfaces)
-        grid = np.zeros((int(max_x), int(max_y), int(max_z)))
-
-        for surface in surfaces:
-            x, y, z = surface["position"]
-            grid[x:x + surface["width"], y:y + surface["height"], z:z + surface["height"]] = 1  # Mark as occupied
-
-        return grid
-    
     def solve(self):
         """Solve the wall painting problem."""
         # Find the optimal path using A* pathfinding
@@ -164,5 +145,71 @@ class WallE:
         print(f"  - Optimal Path: {solution['path']}")
 
         # Visualize the solution
-        self.visualize_3d_environment(self.surfaces, solution["path"], solution["colors"])
+        #self.visualize_3d_environment(self.surfaces, solution["path"], solution["colors"])
 
+
+# Main execution
+if __name__ == "__main__":
+    complex_input_data = {
+   "surfaces": [
+        # Room 1 Walls (forming a closed room)
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-x"},  
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "Vertical-y"},  
+        {"id": 3, "height": 3.0, "width": 4.0, "position": [0, 4, 0], "orientation": "Vertical-x"}, 
+        {"id": 4, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-y"}, 
+
+        # Room 2 Walls
+        {"id": 5, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-x"},  
+        {"id": 6, "height": 3.0, "width": 4.0, "position": [12, 0, 0], "orientation": "Vertical-y"}, 
+        {"id": 7, "height": 3.0, "width": 4.0, "position": [8, 4, 0], "orientation": "Vertical-x"}, 
+        {"id": 8, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-y"},
+
+        # Room 1 to Room 2 Door
+        {"id": 9, "height": 2.0, "width": 1.0, "position": [4, 2, 0], "orientation": "Vertical"},  
+
+        # Room 3 Walls
+        {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-x"}, 
+        {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 8, 0], "orientation": "Vertical-y"}, 
+        {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 12, 0], "orientation": "Vertical-x"}, 
+        {"id": 13, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-y"},  
+
+        # Room 2 to Room 3 Door
+        {"id": 14, "height": 2.0, "width": 1.0, "position": [8, 4, 0], "orientation": "horizontal"}  
+    ],
+    "colors": ["White", "Yellow", "Blue"],
+    "time_per_meter": 2.0,
+    "max_time": 30000.0,
+    "paint_availability": {
+        "White": 15,
+        "Yellow": 2000,
+        "Blue": 1500,
+        "Black": 1005,
+        "Red": 1000
+    },
+    "adjacency_constraint": True,
+    "min_colors": 3,
+    "start_position": [0, 0, 0] }
+    input_data = {
+   "surfaces": [
+        # Room 1 Walls (forming a closed room)
+        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-x"}, 
+        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "Vertical-y"},  
+
+    ],
+    "colors": ["White", "Yellow", "Blue"],
+    "time_per_meter": 2.0,
+    "max_time": 30000.0,
+    "paint_availability": {
+        "White": 15,
+        "Yellow": 2000,
+        "Blue": 1500,
+        "Black": 1005,
+        "Red": 1000
+    },
+    "adjacency_constraint": True,
+    "min_colors": 5,
+    "start_position": [0, 0, 0] }
+ 
+    solver = WallE(complex_input_data)
+    solution = solver.solve()
+    solver.display_solutions(solution)
