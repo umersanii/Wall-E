@@ -1,31 +1,28 @@
 {
     "surfaces": [
-        {"id": 1, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-x"},
-        {"id": 2, "height": 3.0, "width": 4.0, "position": [4, 0, 0], "orientation": "Vertical-y"},
-        {"id": 3, "height": 3.0, "width": 4.0, "position": [0, 4, 0], "orientation": "Vertical-x"},
-        {"id": 4, "height": 3.0, "width": 4.0, "position": [0, 0, 0], "orientation": "Vertical-y"},
-        {"id": 5, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-x"},
-        {"id": 6, "height": 3.0, "width": 4.0, "position": [12, 0, 0], "orientation": "Vertical-y"},
-        {"id": 7, "height": 3.0, "width": 4.0, "position": [8, 4, 0], "orientation": "Vertical-x"},
-        {"id": 8, "height": 3.0, "width": 4.0, "position": [8, 0, 0], "orientation": "Vertical-y"},
-        {"id": 9, "height": 2.0, "width": 1.0, "position": [4, 2, 0], "orientation": "Vertical"},
-        {"id": 10, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-x"},
-        {"id": 11, "height": 3.0, "width": 4.0, "position": [4, 8, 0], "orientation": "Vertical-y"},
-        {"id": 12, "height": 3.0, "width": 4.0, "position": [0, 12, 0], "orientation": "Vertical-x"},
-        {"id": 13, "height": 3.0, "width": 4.0, "position": [0, 8, 0], "orientation": "Vertical-y"},
-        {"id": 14, "height": 2.0, "width": 1.0, "position": [8, 4, 0], "orientation": "horizontal"}
+        {"id": 1, "height": 3, "width": 6, "position": [0, 0, 0], "orientation": "Vertical-x"},
+        {"id": 2, "height": 3, "width": 6, "position": [0, 6, 0], "orientation": "Vertical-x"},
+        {"id": 3, "height": 3, "width": 6, "position": [6, 0, 0], "orientation": "Vertical-y"},
+        {"id": 4, "height": 3, "width": 6, "position": [0, 0, 0], "orientation": "Vertical-y"},
+        {"id": 15, "height": 6, "width": 6, "position": [0, 0, 3], "orientation": "horizontal"},
+        {"id": 9, "height": 3, "width": 8, "position": [6, 0, 0], "orientation": "Vertical-x"},
+        {"id": 10, "height": 3, "width": 8, "position": [6, 6, 0], "orientation": "Vertical-x"},
+        {"id": 11, "height": 3, "width": 6, "position": [14, 0, 0], "orientation": "Vertical-y"},
+        {"id": 12, "height": 3, "width": 8, "position": [6, 6, 0], "orientation": "Vertical-y"},
+        {"id": 13, "height": 3, "width": 8, "position": [0, 6, 0], "orientation": "Vertical-y"},
+        {"id": 14, "height": 3, "width": 6, "position": [0, 14, 0], "orientation": "Vertical-x"}
     ],
-    "colors": ["White", "Yellow", "Blue"],
+    "colors": ["Red", "Yellow", "Blue", "White", "Black"],
     "time_per_meter": 2.0,
     "max_time": 30000.0,
     "paint_availability": {
-        "White": 15,
+        "White": 150,
         "Yellow": 2000,
-        "Blue": 1500,
+        "Blue": 150,
         "Black": 1005,
         "Red": 1000
     },
     "adjacency_constraint": true,
-    "min_colors": 3,
+    "min_colors": 4,
     "start_position": [0, 0, 0]
 }
