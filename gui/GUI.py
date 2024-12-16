@@ -71,7 +71,11 @@ class App(QWidget):
                 with open(file_name, "r") as file:
                     data = json.load(file)
                     Walle = WallE(data)
-                    Walle.display_solutions(Walle.solve())
+                    solution = Walle.solve()
+                    #Walle.display_solutions()
+                    self.output_screen = OutputScreen(solution, data["surfaces"])
+                    self.output_screen.show()
+                    self.close()
 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load JSON file: {e}")
