@@ -12,7 +12,8 @@
   - Renders walls with their assigned colors and plots the robot’s traversal path.
 - **Dynamic Input Support:**
   - User-configurable wall definitions, constraints, and robot properties.
-
+- **Interactive 3D Visualization:** Inspect and modify wall configurations dynamically.
+- **Multiple Rooms Support:** Seamlessly handle complex environments with multiple connected rooms.
 ---
 
 ### **Setup**
@@ -80,10 +81,11 @@ Solution 1:
 
 ---
 
-### **Planned Features**
-- **Interactive 3D Visualization:** Inspect and modify wall configurations dynamically.
-- **Multiple Rooms Support:** Seamlessly handle complex environments with multiple connected rooms.
-- **Export Options:** Save results and visualizations as images or 3D models.
+### Screenshots
+
+| **Input GUI Screen** | **Output GUI Screen** |
+|----------------------|-----------------------|
+| ![Input GUI](screenshots/input_gui.png) | ![Output GUI](screenshots/output_gui.png) |
 
 ---
 
